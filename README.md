@@ -1,1 +1,299 @@
-# test-115-1
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>封裝材料測驗</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: single-column worksheet, sticky progress bar, results summary on top after submit. */
+:root {
+  --bg: #f4f5f3;
+  --surface: #ffffff;
+  --fg: #1d2523;
+  --muted: #5d6965;
+  --line: #d9dedb;
+  --accent: #b4572b;       /* copper */
+  --accent-soft: #f6e6dc;
+  --good: #1f7a4d;
+  --good-soft: #def2e6;
+  --bad: #b3261e;
+  --bad-soft: #fbe3e0;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141918; --surface: #1c2321; --fg: #e8ecea; --muted: #9aa6a1; --line: #2e3836;
+    --accent: #e08a5a; --accent-soft: #3a2a21;
+    --good: #5fc995; --good-soft: #1b3328; --bad: #ff8a80; --bad-soft: #3b1f1d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141918; --surface: #1c2321; --fg: #e8ecea; --muted: #9aa6a1; --line: #2e3836;
+  --accent: #e08a5a; --accent-soft: #3a2a21;
+  --good: #5fc995; --good-soft: #1b3328; --bad: #ff8a80; --bad-soft: #3b1f1d;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--bg);
+}
+.wrap { max-width: 760px; margin: 0 auto; }
+header.top { padding: 28px 0 8px; }
+h1 { font-size: 1.7rem; line-height: 1.25; margin: 0 0 4px; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; font-size: .95rem; }
+
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); padding: 10px 0 12px; margin-top: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.bar-row { display: flex; justify-content: space-between; gap: 12px; font-family: var(--font-mono); font-size: .8rem; color: var(--muted); }
+.track { height: 6px; background: var(--line); margin-top: 8px; border-radius: 3px; overflow: hidden; }
+.fill { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+
+.result { background: var(--surface); border: 1px solid var(--line); padding: 22px; margin-top: 20px; }
+.result[hidden] { display: none; }
+.score { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.score .num { font-family: var(--font-mono); font-size: 3rem; font-weight: 500; line-height: 1; color: var(--accent); }
+.score .pct { color: var(--muted); font-family: var(--font-mono); }
+.result h2 { font-size: 1.05rem; margin: 20px 0 8px; }
+.wrong-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.wrong-list li { padding: 10px 12px; background: var(--bad-soft); font-size: .92rem; min-width: 0; overflow-wrap: anywhere; }
+.wrong-list a { color: inherit; text-decoration: none; font-weight: 700; }
+.wrong-list .ans { display: block; color: var(--muted); font-size: .85rem; margin-top: 2px; }
+.perfect { color: var(--good); font-weight: 700; margin: 14px 0 0; }
+
+button.btn {
+  font: inherit; font-weight: 700; cursor: pointer; border: 0; padding: 12px 22px;
+  background: var(--accent); color: #fff; min-height: 44px;
+}
+.dark-btn-fix { color: #1a1210; }
+:root[data-theme="dark"] button.btn { color: #1a1210; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.btn { color: #1a1210; } }
+button.btn:focus-visible, .opt:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+.actions { margin-top: 18px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+.q { background: var(--surface); border: 1px solid var(--line); padding: 18px 18px 14px; margin-top: 14px; scroll-margin-top: 90px; }
+.q.right { border-left: 5px solid var(--good); }
+.q.wrong { border-left: 5px solid var(--bad); }
+.q-head { display: flex; gap: 12px; align-items: baseline; }
+.q-no { font-family: var(--font-mono); font-size: .8rem; color: var(--accent); flex: none; min-width: 2.2em; }
+.q-text { margin: 0 0 12px; font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
+.opts { display: grid; gap: 8px; margin-left: calc(2.2em + 12px); }
+.opt {
+  display: flex; gap: 10px; text-align: left; font: inherit; color: var(--fg);
+  background: var(--bg); border: 1px solid var(--line); padding: 10px 12px; cursor: pointer; min-height: 44px; min-width: 0; width: 100%;
+}
+.opt .k { font-family: var(--font-mono); font-weight: 500; flex: none; color: var(--muted); }
+.opt .t { min-width: 0; overflow-wrap: anywhere; }
+.opt:hover { border-color: var(--accent); }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.ok { border-color: var(--good); background: var(--good-soft); }
+.opt.no { border-color: var(--bad); background: var(--bad-soft); }
+.opt[disabled] { cursor: default; }
+.tag { font-family: var(--font-mono); font-size: .75rem; margin-left: auto; flex: none; padding-left: 8px; }
+.note { margin: 10px 0 0 calc(2.2em + 12px); font-size: .88rem; }
+.note.bad { color: var(--bad); }
+.note.good { color: var(--good); }
+.submit-row { margin-top: 24px; }
+.warn { color: var(--bad); font-size: .9rem; margin: 8px 0 0; min-height: 1.4em; }
+@media (max-width: 520px) {
+  .opts, .note { margin-left: 0; }
+  .q { padding: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>封裝材料測驗</h1>
+    <p class="sub">共 40 題，單選。作答後送出，會顯示分數與每題的對錯。</p>
+  </header>
+
+  <div class="bar">
+    <div class="bar-row"><span id="progText">已作答 0 / 40</span><span id="modeText">作答中</span></div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+  </div>
+
+  <section class="result" id="result" hidden aria-live="polite">
+    <div class="score"><span class="num" id="scoreNum"></span><span class="pct" id="scorePct"></span></div>
+    <div id="wrongBox"></div>
+    <div class="actions"><button class="btn" id="retry1" type="button">重新測驗</button></div>
+  </section>
+
+  <main id="list"></main>
+
+  <div class="submit-row" id="submitRow">
+    <button class="btn" id="submitBtn" type="button">送出答案</button>
+    <p class="warn" id="warn"></p>
+  </div>
+  <div class="actions" id="bottomRetry" hidden><button class="btn" id="retry2" type="button">重新測驗</button></div>
+</div>
+
+<script>
+// [題目, [選項 A..E], 正確答案索引]
+var Q = [
+["下列何者最適合描述材料的「熱膨脹係數」CTE？",["材料吸收水分的能力","材料隨溫度變化而產生尺寸變化的程度","材料抵抗電流的能力","材料的硬度","材料的介電損耗"],1],
+["下列哪一種材料的 CTE (Coefficient of Thermal Expansion) 通常最接近矽晶圓？",["有機樹脂","EMC","Silicon","銅","錫"],2],
+["Tg (Glass Transition Temperature) 主要代表材料的什麼特性？",["玻璃轉移溫度","熔點","沸點","分解溫度","結晶溫度"],0],
+["在半導體封裝中，提高材料的熱導率 (Thermal Conductivity) 通常可以帶來什麼好處？",["增加吸水率","降低散熱能力","提高熱阻","改善熱傳導與散熱","增加介電損耗"],3],
+["下列哪一種材料通常具有較高的熱導率 (Thermal Conductivity)？",["空氣","Epoxy Resin","Silicone","Copper","有機膠材"],3],
+["當 Silicon 與 Organic Substrate 的 CTE (Coefficient of Thermal Expansion) 差異很大時，最可能造成哪一種問題？",["電阻完全消失","Thermal Stress 增加","Dk 變成零","熔點下降為室溫","材料自動結晶"],1],
+["下列何者最適合用來量測高分子材料的 Tg (Glass Transition Temperature) 與黏彈性？",["DMA (Dynamic Mechanical Analysis)","X-ray","SEM","四點探針","光學顯微鏡"],0],
+["TMA (Thermomechanical Analysis) 在封裝材料分析中最常用來量測：",["電阻率","Df","CTE (Coefficient of Thermal Expansion)","離子濃度","表面粗糙度"],2],
+["DSC (Differential Scanning Calorimetry) 最適合用來分析下列哪一項？",["材料的熱轉變","表面形貌","電阻率","線徑","焊點高度"],0],
+["如果 TIM (Thermal Interface Material) 的熱阻過高，最可能造成：",["材料吸水率降低","焊點熔點提高","Junction Temperature 降低","Junction Temperature 升高","電阻變成零"],3],
+["Young's Modulus 主要代表材料的：",["導電能力","熱傳導能力","剛性","吸水能力","介電能力"],2],
+["在 Underfill 中，Modulus 過高可能造成：",["完全沒有應力","封裝內部應力增加","CTE 一定變成零","熱導率一定下降到零","材料一定不會裂"],1],
+["封裝材料的 Adhesion Strength 主要反映：",["材料界面之間的黏著能力","材料的熔點","材料的電阻","材料的 Dk","材料的熱導率"],0],
+["封裝材料的界面 Adhesion 不良，最容易造成：",["CTE 消失","電阻變成零","熔點增加","Delamination","Dk 固定不變"],3],
+["Die Shear Test 主要用來評估：",["Die 與黏著材料之間的結合強度","材料的 Dk","材料的吸水率","材料的熔點","材料的熱阻"],0],
+["Wire Pull Test 主要用來評估：",["Wire Bond 強度","EMC 熱導率","Substrate CTE","TIM 熱阻","PI 的 Df"],0],
+["Ball Shear Test 主要評估：",["EMC 的吸水率","Wire Bond Ball 與 Pad 的接合強度","TIM 的熱阻","Substrate 的 Dk","Resin 的 Tg"],1],
+["若封裝材料的 Cure Shrinkage 過大，可能造成：",["材料不再固化","電阻完全消失","封裝應力增加","熱導率一定增加","吸水率一定下降"],2],
+["下列何者最可能造成封裝界面 Delamination？",["適當的 Cure","良好的 Adhesion","低吸水率","CTE Mismatch 與界面黏著力不足","良好的材料相容性"],3],
+["Nanoindentation 常用來量測：",["材料局部硬度與模數","材料吸水率","材料離子濃度","材料 Df","材料熔點"],0],
+["封裝材料特性 Dk 是指：",["Thermal Conductivity","Dielectric Constant","Diffusion Coefficient","Density","Dielectric Crack"],1],
+["封裝材料特性 Df (Dissipation Factor) 主要代表：",["介電損耗","熱膨脹","材料硬度","吸水率","熱阻"],0],
+["對高速 SerDes / RF 封裝而言，下列哪一項通常需要特別關注？",["顏色","氣味","Dk / Df","材料重量","包裝尺寸"],2],
+["封裝材料中的 Ionic Contamination 主要可能造成：",["熱導率一定增加","CTE 一定下降","材料硬度增加","金屬腐蝕與漏電","Tg 一定提高"],3],
+["封裝材料特性 Ion Chromatography (IC) 常用於分析：",["離子污染","材料硬度","CTE","Tg","熱阻"],0],
+["若封裝材料的 Df (Dissipation Factor) 過高，在高速訊號應用中可能造成：",["Signal Loss 增加","CTE 變成零","機械強度一定增加","熱阻一定下降","吸水率一定降低"],0],
+["封裝材料特性 Volume Resistivity 主要反映材料的：",["熱膨脹特性","絕緣／導電特性","黏著特性","流動特性","固化特性"],1],
+["下列哪一項最可能造成封裝中的 Electrical Leakage？",["適當的絕緣材料","低吸水率","離子污染與水氣","高介電強度","良好清潔度"],2],
+["封裝材料的 Moisture Absorption 是指：",["材料硬度","材料導電能力","材料放出熱量的能力","材料吸收水氣的能力","材料抗拉強度"],3],
+["封裝材料特性 MSL (Moisture Sensitivity Level) 主要與哪一種環境因素有關？",["振動","聲音","紫外線","磁場","水氣"],4],
+["封裝材料特性「Popcorn Effect」通常與下列何者最相關？",["Low Dk","Moisture + Reflow","High Thermal Conductivity","Low CTE","High Hardness"],1],
+["封裝材料特性 HAST 主要用來加速評估：",["高溫高濕可靠度","機械拉伸強度","Dk","材料硬度","銲錫熔點"],0],
+["封裝材料特性 THB 測試中的 H 通常代表：",["Hardness","Heat Sink","Humidity","High Current","Hydrogen"],2],
+["封裝材料特性，下列哪一種環境最容易加速金屬腐蝕？",["乾燥低溫","真空環境","低濕度惰性氣","高溫高濕＋離子污染","純氮環境"],3],
+["封裝材料特性，TGA (Thermogravimetric Analysis) 最適合用來分析：",["材料熱失重與分解行為","Bond Strength","Dk","CTE","線徑"],0],
+["若封裝材料具有較高的吸水率，最可能對哪項可靠度造成不利影響？",["Wire Diameter","MSL / Reflow","Copper Conductivity","Die Size","Bump Pitch"],1],
+["封裝材料特性，Underfill 的 Viscosity 太高，最可能造成：",["流動與填充困難","電阻變成零","Tg 消失","材料不會固化","TE 一定下降"],0],
+["封裝材料特性，Rheometer 主要用於量測材料的：",["電阻率","離子濃度","流變／黏度特性","CTE","Dk"],2],
+["封裝材料特性，EMC 的 Flowability 不佳可能造成：",["Dk 變成零","熱導率無限大","Mold Filling 不完整","Tg 自動升高","電阻消失"],2],
+["封裝材料 Cure 不完全可能造成：",["長期可靠度下降","材料一定更硬","吸水率一定下降","CTE 一定變小","電阻一定降低"],0]
+];
+var L = "ABCDE";
+var ans = new Array(Q.length).fill(-1);
+var submitted = false;
+var list = document.getElementById("list");
+
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function render(){
+  var h = "";
+  Q.forEach(function(q, i){
+    var cls = "q";
+    var user = ans[i], right = q[2];
+    if (submitted) cls += (user === right ? " right" : " wrong");
+    h += '<article class="' + cls + '" id="q' + i + '"><div class="q-head"><span class="q-no">' + String(i+1).padStart(2,"0") + '</span><p class="q-text">' + esc(q[0]) + '</p></div><div class="opts">';
+    q[1].forEach(function(t, k){
+      var oc = "opt", tag = "";
+      if (submitted) {
+        if (k === right) { oc += " ok"; tag = user === right && user === k ? "你的答案 ✓" : "正確答案"; }
+        else if (k === user) { oc += " no"; tag = "你的答案 ✗"; }
+      } else if (k === user) { oc += " sel"; }
+      h += '<button type="button" class="' + oc + '" data-q="' + i + '" data-k="' + k + '"' + (submitted ? " disabled" : "") + '><span class="k">' + L[k] + '.</span><span class="t">' + esc(t) + '</span>' + (tag ? '<span class="tag">' + tag + '</span>' : '') + '</button>';
+    });
+    h += '</div>';
+    if (submitted) {
+      if (user === -1) h += '<p class="note bad">未作答。正確答案：' + L[right] + '. ' + esc(q[1][right]) + '</p>';
+      else if (user !== right) h += '<p class="note bad">正確答案：' + L[right] + '. ' + esc(q[1][right]) + '</p>';
+      else h += '<p class="note good">答對了</p>';
+    }
+    h += '</article>';
+  });
+  list.innerHTML = h;
+  updateBar();
+}
+
+function updateBar(){
+  var n = ans.filter(function(a){ return a !== -1; }).length;
+  document.getElementById("progText").textContent = "已作答 " + n + " / " + Q.length;
+  document.getElementById("fill").style.width = (n / Q.length * 100) + "%";
+  document.getElementById("modeText").textContent = submitted ? "已批改" : "作答中";
+}
+
+list.addEventListener("click", function(e){
+  var b = e.target.closest(".opt");
+  if (!b || submitted) return;
+  var i = +b.dataset.q, k = +b.dataset.k;
+  ans[i] = k;
+  var sibs = b.parentNode.querySelectorAll(".opt");
+  sibs.forEach(function(s){ s.classList.toggle("sel", s === b); });
+  document.getElementById("warn").textContent = "";
+  updateBar();
+});
+
+document.getElementById("submitBtn").addEventListener("click", function(){
+  var blank = ans.reduce(function(a, v, i){ if (v === -1) a.push(i + 1); return a; }, []);
+  var warn = document.getElementById("warn");
+  if (blank.length && !this.dataset.confirm) {
+    warn.textContent = "還有 " + blank.length + " 題未作答（第 " + blank.join("、") + " 題）。再按一次「送出答案」會把它們算作答錯。";
+    this.dataset.confirm = "1";
+    return;
+  }
+  delete this.dataset.confirm;
+  warn.textContent = "";
+  grade();
+});
+
+function grade(){
+  submitted = true;
+  var score = 0, wrong = [];
+  Q.forEach(function(q, i){ if (ans[i] === q[2]) score++; else wrong.push(i); });
+  document.getElementById("scoreNum").textContent = score + " / " + Q.length;
+  document.getElementById("scorePct").textContent = (score / Q.length * 100).toFixed(1) + "%";
+  var box = document.getElementById("wrongBox");
+  if (!wrong.length) {
+    box.innerHTML = '<p class="perfect">全部答對。</p>';
+  } else {
+    var h = '<h2>答錯的題目（' + wrong.length + ' 題）</h2><ul class="wrong-list">';
+    wrong.forEach(function(i){
+      var q = Q[i], u = ans[i];
+      h += '<li><a href="#q' + i + '" data-jump="' + i + '">第 ' + (i+1) + ' 題</a> ' + esc(q[0]) +
+        '<span class="ans">你的答案：' + (u === -1 ? "未作答" : L[u] + ". " + esc(q[1][u])) + '　｜　正確答案：' + L[q[2]] + ". " + esc(q[1][q[2]]) + '</span></li>';
+    });
+    box.innerHTML = h + '</ul>';
+  }
+  document.getElementById("result").hidden = false;
+  document.getElementById("submitRow").hidden = true;
+  document.getElementById("bottomRetry").hidden = false;
+  render();
+  window.scrollTo(0, 0);
+}
+
+document.getElementById("wrongBox").addEventListener("click", function(e){
+  var a = e.target.closest("[data-jump]");
+  if (!a) return;
+  e.preventDefault();
+  var el = document.getElementById("q" + a.dataset.jump);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+function retry(){
+  ans = new Array(Q.length).fill(-1);
+  submitted = false;
+  document.getElementById("result").hidden = true;
+  document.getElementById("submitRow").hidden = false;
+  document.getElementById("bottomRetry").hidden = true;
+  document.getElementById("warn").textContent = "";
+  render();
+  window.scrollTo(0, 0);
+}
+document.getElementById("retry1").addEventListener("click", retry);
+document.getElementById("retry2").addEventListener("click", retry);
+
+render();
+</script>
+
+</body></html>
