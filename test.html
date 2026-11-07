@@ -115,7 +115,7 @@ button.btn:focus-visible, .opt:focus-visible { outline: 3px solid var(--fg); out
 <div class="wrap">
   <header class="top">
     <h1>封裝材料測驗</h1>
-    <p class="sub">共 40 題，單選。作答後送出，會顯示分數與每題的對錯。</p>
+    <p class="sub">共 40 題，單選。題目順序固定，選項順序每次隨機。作答後送出，會顯示分數與每題的對錯。</p>
   </header>
 
   <div class="bar">
@@ -186,6 +186,10 @@ var L = "ABCDE";
 var ans = new Array(Q.length).fill(-1);
 var submitted = false;
 var list = document.getElementById("list");
+function shuffled(n){ var a = []; for (var i = 0; i < n; i++) a.push(i); for (var j = n - 1; j > 0; j--) { var r = Math.floor(Math.random() * (j + 1)); var t = a[j]; a[j] = a[r]; a[r] = t; } return a; }
+function newOrder(){ return Q.map(function(q){ return shuffled(q[1].length); }); }
+var order = newOrder();
+function pos(i, k){ return order[i].indexOf(k); }
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
@@ -196,18 +200,19 @@ function render(){
     var user = ans[i], right = q[2];
     if (submitted) cls += (user === right ? " right" : " wrong");
     h += '<article class="' + cls + '" id="q' + i + '"><div class="q-head"><span class="q-no">' + String(i+1).padStart(2,"0") + '</span><p class="q-text">' + esc(q[0]) + '</p></div><div class="opts">';
-    q[1].forEach(function(t, k){
+    order[i].forEach(function(k, p){
+      var t = q[1][k];
       var oc = "opt", tag = "";
       if (submitted) {
         if (k === right) { oc += " ok"; tag = user === right && user === k ? "你的答案 ✓" : "正確答案"; }
         else if (k === user) { oc += " no"; tag = "你的答案 ✗"; }
       } else if (k === user) { oc += " sel"; }
-      h += '<button type="button" class="' + oc + '" data-q="' + i + '" data-k="' + k + '"' + (submitted ? " disabled" : "") + '><span class="k">' + L[k] + '.</span><span class="t">' + esc(t) + '</span>' + (tag ? '<span class="tag">' + tag + '</span>' : '') + '</button>';
+      h += '<button type="button" class="' + oc + '" data-q="' + i + '" data-k="' + k + '"' + (submitted ? " disabled" : "") + '><span class="k">' + L[p] + '.</span><span class="t">' + esc(t) + '</span>' + (tag ? '<span class="tag">' + tag + '</span>' : '') + '</button>';
     });
     h += '</div>';
     if (submitted) {
-      if (user === -1) h += '<p class="note bad">未作答。正確答案：' + L[right] + '. ' + esc(q[1][right]) + '</p>';
-      else if (user !== right) h += '<p class="note bad">正確答案：' + L[right] + '. ' + esc(q[1][right]) + '</p>';
+      if (user === -1) h += '<p class="note bad">未作答。正確答案：' + L[pos(i, right)] + '. ' + esc(q[1][right]) + '</p>';
+      else if (user !== right) h += '<p class="note bad">正確答案：' + L[pos(i, right)] + '. ' + esc(q[1][right]) + '</p>';
       else h += '<p class="note good">答對了</p>';
     }
     h += '</article>';
@@ -261,7 +266,7 @@ function grade(){
     wrong.forEach(function(i){
       var q = Q[i], u = ans[i];
       h += '<li><a href="#q' + i + '" data-jump="' + i + '">第 ' + (i+1) + ' 題</a> ' + esc(q[0]) +
-        '<span class="ans">你的答案：' + (u === -1 ? "未作答" : L[u] + ". " + esc(q[1][u])) + '　｜　正確答案：' + L[q[2]] + ". " + esc(q[1][q[2]]) + '</span></li>';
+        '<span class="ans">你的答案：' + (u === -1 ? "未作答" : L[pos(i, u)] + ". " + esc(q[1][u])) + '　｜　正確答案：' + L[pos(i, q[2])] + ". " + esc(q[1][q[2]]) + '</span></li>';
     });
     box.innerHTML = h + '</ul>';
   }
@@ -283,6 +288,7 @@ document.getElementById("wrongBox").addEventListener("click", function(e){
 function retry(){
   ans = new Array(Q.length).fill(-1);
   submitted = false;
+  order = newOrder();
   document.getElementById("result").hidden = true;
   document.getElementById("submitRow").hidden = false;
   document.getElementById("bottomRetry").hidden = true;
