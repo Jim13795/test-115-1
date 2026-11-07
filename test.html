@@ -103,6 +103,11 @@ button.btn:focus-visible, .opt:focus-visible { outline: 3px solid var(--fg); out
 .note { margin: 10px 0 0 calc(2.2em + 12px); font-size: .88rem; }
 .note.bad { color: var(--bad); }
 .note.good { color: var(--good); }
+.tools { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.tools[hidden] { display: none; }
+button.sec { font: inherit; font-weight: 500; cursor: pointer; padding: 9px 16px; min-height: 44px; background: var(--surface); color: var(--fg); border: 1px solid var(--line); }
+button.sec:hover { border-color: var(--accent); }
+button.sec:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .submit-row { margin-top: 24px; }
 .warn { color: var(--bad); font-size: .9rem; margin: 8px 0 0; min-height: 1.4em; }
 @media (max-width: 520px) {
@@ -115,7 +120,11 @@ button.btn:focus-visible, .opt:focus-visible { outline: 3px solid var(--fg); out
 <div class="wrap">
   <header class="top">
     <h1>封裝材料測驗</h1>
-    <p class="sub">共 40 題，單選。題目順序固定，選項順序每次隨機。作答後送出，會顯示分數與每題的對錯。</p>
+    <p class="sub">共 40 題，單選。題目順序固定，選項順序每次隨機。預設按原題號出題，也可以按下方按鈕打亂題目順序。作答後送出，會顯示分數與每題的對錯。</p>
+    <div class="tools" id="tools">
+      <button class="sec" id="shuffleBtn" type="button">打亂題目順序</button>
+      <button class="sec" id="orderBtn" type="button" hidden>恢復原順序</button>
+    </div>
   </header>
 
   <div class="bar">
@@ -190,16 +199,19 @@ function shuffled(n){ var a = []; for (var i = 0; i < n; i++) a.push(i); for (va
 function newOrder(){ return Q.map(function(q){ return shuffled(q[1].length); }); }
 var order = newOrder();
 function pos(i, k){ return order[i].indexOf(k); }
+var qOrder = Q.map(function(_, i){ return i; });
+var qShuffled = false;
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
 function render(){
   var h = "";
-  Q.forEach(function(q, i){
+  qOrder.forEach(function(i, n){
+    var q = Q[i];
     var cls = "q";
     var user = ans[i], right = q[2];
     if (submitted) cls += (user === right ? " right" : " wrong");
-    h += '<article class="' + cls + '" id="q' + i + '"><div class="q-head"><span class="q-no">' + String(i+1).padStart(2,"0") + '</span><p class="q-text">' + esc(q[0]) + '</p></div><div class="opts">';
+    h += '<article class="' + cls + '" id="q' + i + '"><div class="q-head"><span class="q-no">' + String(n+1).padStart(2,"0") + '</span><p class="q-text">' + esc(q[0]) + '</p></div><div class="opts">';
     order[i].forEach(function(k, p){
       var t = q[1][k];
       var oc = "opt", tag = "";
@@ -240,7 +252,7 @@ list.addEventListener("click", function(e){
 });
 
 document.getElementById("submitBtn").addEventListener("click", function(){
-  var blank = ans.reduce(function(a, v, i){ if (v === -1) a.push(i + 1); return a; }, []);
+  var blank = qOrder.reduce(function(a, i, n){ if (ans[i] === -1) a.push(n + 1); return a; }, []);
   var warn = document.getElementById("warn");
   if (blank.length && !this.dataset.confirm) {
     warn.textContent = "還有 " + blank.length + " 題未作答（第 " + blank.join("、") + " 題）。再按一次「送出答案」會把它們算作答錯。";
@@ -255,7 +267,7 @@ document.getElementById("submitBtn").addEventListener("click", function(){
 function grade(){
   submitted = true;
   var score = 0, wrong = [];
-  Q.forEach(function(q, i){ if (ans[i] === q[2]) score++; else wrong.push(i); });
+  qOrder.forEach(function(i){ if (ans[i] === Q[i][2]) score++; else wrong.push(i); });
   document.getElementById("scoreNum").textContent = score + " / " + Q.length;
   document.getElementById("scorePct").textContent = (score / Q.length * 100).toFixed(1) + "%";
   var box = document.getElementById("wrongBox");
@@ -265,13 +277,14 @@ function grade(){
     var h = '<h2>答錯的題目（' + wrong.length + ' 題）</h2><ul class="wrong-list">';
     wrong.forEach(function(i){
       var q = Q[i], u = ans[i];
-      h += '<li><a href="#q' + i + '" data-jump="' + i + '">第 ' + (i+1) + ' 題</a> ' + esc(q[0]) +
+      h += '<li><a href="#q' + i + '" data-jump="' + i + '">第 ' + (qOrder.indexOf(i) + 1) + ' 題</a> ' + esc(q[0]) +
         '<span class="ans">你的答案：' + (u === -1 ? "未作答" : L[pos(i, u)] + ". " + esc(q[1][u])) + '　｜　正確答案：' + L[pos(i, q[2])] + ". " + esc(q[1][q[2]]) + '</span></li>';
     });
     box.innerHTML = h + '</ul>';
   }
   document.getElementById("result").hidden = false;
   document.getElementById("submitRow").hidden = true;
+  document.getElementById("tools").hidden = true;
   document.getElementById("bottomRetry").hidden = false;
   render();
   window.scrollTo(0, 0);
@@ -289,6 +302,8 @@ function retry(){
   ans = new Array(Q.length).fill(-1);
   submitted = false;
   order = newOrder();
+  if (qShuffled) qOrder = shuffled(Q.length);
+  document.getElementById("tools").hidden = false;
   document.getElementById("result").hidden = true;
   document.getElementById("submitRow").hidden = false;
   document.getElementById("bottomRetry").hidden = true;
@@ -298,6 +313,27 @@ function retry(){
 }
 document.getElementById("retry1").addEventListener("click", retry);
 document.getElementById("retry2").addEventListener("click", retry);
+
+function syncTools(){
+  document.getElementById("shuffleBtn").textContent = qShuffled ? "再打亂一次" : "打亂題目順序";
+  document.getElementById("orderBtn").hidden = !qShuffled;
+}
+document.getElementById("shuffleBtn").addEventListener("click", function(){
+  if (submitted) return;
+  qOrder = shuffled(Q.length);
+  qShuffled = true;
+  syncTools();
+  render();
+  window.scrollTo(0, 0);
+});
+document.getElementById("orderBtn").addEventListener("click", function(){
+  if (submitted) return;
+  qOrder = Q.map(function(_, i){ return i; });
+  qShuffled = false;
+  syncTools();
+  render();
+  window.scrollTo(0, 0);
+});
 
 render();
 </script>
